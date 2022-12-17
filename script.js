@@ -4,6 +4,8 @@ const scriptService = require('./src/dal/dbQuery')
 const Path = require('path')
 const Fs = require('fs')
 const Printer = require('pdf-to-printer')
+let cron = require('node-cron');
+
 class Script
 {
     constructor() {
@@ -92,8 +94,7 @@ class Script
     printUnprintedPdfs = async (pdflink) => {
         try {
             let response = await Printer.print(`./src/pdfs/${pdflink}`)
-            console.log(response,'end')
-            if(response != 'Operating System not supported'){
+            if(response == 'Operating System not supported'){
                 return false
             } else {
                 return true
@@ -134,6 +135,7 @@ class Script
             let attachmentIds = await this.checkIfThereAttachments(element)
             if(attachmentIds){
                 let checks = await this.checkIsPrinted(attachmentIds[0].mailId)
+                console.log(checks)
                 if(!checks) {
                     let isInserted = await this.insetIdsToDataBase(attachmentIds[0].mailId,attachmentIds[0].attachId)
                     if(isInserted){
@@ -153,10 +155,19 @@ class Script
         });
        
 
+        return 'end'
 
     }
 
 }
 
-let script = new Script();
-script.runScript();
+script = async () => {
+    let script = new Script();
+    let result = await script.runScript();
+}
+cron.schedule('* * * * *', () => {
+    console.log('running a task every minute');
+    script()
+
+  });
+// script()

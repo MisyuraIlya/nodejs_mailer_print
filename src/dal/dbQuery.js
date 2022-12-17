@@ -59,7 +59,7 @@ class dbQuery {
         }
     }
 
-    checkIsPrinted = async (mailId) => {
+    checkIsPrinted = async (mailId = 0) => {
         const sql = 'SELECT * FROM docs where mail_id = ?';
         try {
             const result = await this.dbQuery(sql,[mailId])
