@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const auth = {
   type: "OAuth2",
-  user: "sid.cd.varma@gmail.com",
+  user: "nurlight1992ltd@gmail.com",
   clientId: process.env.CLIENT_ID,
   clientSecret: process.env.CLIENT_SECRET,
   refreshToken: process.env.REFRESH_TOKEN,

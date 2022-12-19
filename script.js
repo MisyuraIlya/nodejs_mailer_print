@@ -3,7 +3,7 @@ const axios = require("axios");
 const scriptService = require('./src/dal/dbQuery')
 const Path = require('path')
 const Fs = require('fs')
-const Printer = require('pdf-to-printer')
+const myPrinter = require('unix-print')
 let cron = require('node-cron');
 
 class Script
@@ -20,15 +20,18 @@ class Script
         const response = await axios({method: 'get',url: `http://localhost:8000/api/mail/read/${unreadMessageId}`});
         let data = response.data.payload.parts
         let ids =[]
+        console.log(data)
+        if(data){
+            data.forEach(element => {
+                if(element.body.attachmentId){
+                    ids.push({
+                        mailId:unreadMessageId,
+                        attachId:element.body.attachmentId
+                    })
+                }
+            });
+        }
 
-        data.forEach(element => {
-            if(element.body.attachmentId){
-                ids.push({
-                    mailId:unreadMessageId,
-                    attachId:element.body.attachmentId
-                })
-            }
-        });
 
         if(ids.length > 0){
             return ids 
@@ -90,11 +93,12 @@ class Script
         }
     }
 
-
     printUnprintedPdfs = async (pdflink) => {
         try {
-            let response = await Printer.print(`./src/pdfs/${pdflink}`)
-            if(response == 'Operating System not supported'){
+            // let response = await Printer.print(`./src/pdfs/${pdflink}`)
+            // myPrinter.print(`./src/pdfs/${pdflink}`).then(console.log())
+            let data = await myPrinter.print(`./src/pdfs/${pdflink}`).then(console.log())
+            if(data.stderr){
                 return false
             } else {
                 return true
@@ -131,15 +135,15 @@ class Script
 
     runScript = async () => {
         let ids = await this.fetchUnreadEmailsIds()
+        console.log(ids)
         ids.forEach(async element => {
             let attachmentIds = await this.checkIfThereAttachments(element)
             if(attachmentIds){
                 let checks = await this.checkIsPrinted(attachmentIds[0].mailId)
-                console.log(checks)
                 if(!checks) {
                     let isInserted = await this.insetIdsToDataBase(attachmentIds[0].mailId,attachmentIds[0].attachId)
                     if(isInserted){
-                        let downloadPdf = await this.downloadPdf('ilya.mi@digitrade.co.il',attachmentIds[0].mailId,attachmentIds[0].attachId)
+                        let downloadPdf = await this.downloadPdf('nurlight1992ltd@gmail.com',attachmentIds[0].mailId,attachmentIds[0].attachId)
                         if(downloadPdf.length > 0){
                             let insertPdftoDb = await this.insertPdfNametoDb(attachmentIds[0].mailId,downloadPdf)
                             if(insertPdftoDb){
@@ -165,9 +169,9 @@ script = async () => {
     let script = new Script();
     let result = await script.runScript();
 }
-cron.schedule('* * * * *', () => {
-    console.log('running a task every minute');
-    script()
+// cron.schedule('* * * * *', () => {
+//     console.log('running a task every minute');
+//     script()
 
-  });
-// script()
+//   });
+script()
